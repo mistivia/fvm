@@ -409,6 +409,9 @@ int fvm_execute(struct fvm *vm) {
       fvm_pushf(vm, (fvm_float_t)x);
       vm->pc++;
       break;
+    case FVM_OP_EXIT:
+      a = fvm_pop(vm);
+      return a;
     default:
       fprintf(stderr, "unknown opcode.\n");
       break; 

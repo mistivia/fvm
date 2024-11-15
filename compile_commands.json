@@ -1,0 +1,43 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-g",
+      "-o",
+      "src/fvm.o",
+      "src/fvm.c"
+    ],
+    "directory": "/home/mistivia/repos/fvm",
+    "file": "/home/mistivia/repos/fvm/src/fvm.c",
+    "output": "/home/mistivia/repos/fvm/src/fvm.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-g",
+      "-o",
+      "src/main.o",
+      "src/main.c"
+    ],
+    "directory": "/home/mistivia/repos/fvm",
+    "file": "/home/mistivia/repos/fvm/src/main.c",
+    "output": "/home/mistivia/repos/fvm/src/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-c",
+      "-Isrc/",
+      "-g",
+      "src/fvm.o",
+      "-o",
+      "tests/test_opcodes.bin",
+      "tests/test_opcodes.c"
+    ],
+    "directory": "/home/mistivia/repos/fvm",
+    "file": "/home/mistivia/repos/fvm/tests/test_opcodes.c",
+    "output": "/home/mistivia/repos/fvm/tests/test_opcodes.bin"
+  }
+]

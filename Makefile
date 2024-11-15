@@ -1,4 +1,4 @@
-target = foo
+target = fvm
 cflags = -g
 ldflags = -lm
 cc = gcc
@@ -9,6 +9,8 @@ tests=$(shell find tests/ -name '*.c')
 tests_bin=$(tests:.c=.bin)
 
 all: $(target)
+
+full: all $(tests_bin)
 
 $(target): $(obj) src/main.o
 	$(cc) $(cflags) $(ldflags) -o $@ $^

@@ -90,6 +90,8 @@ enum fvm_op {
 
   FVM_OP_FTI,
   FVM_OP_ITF,
+
+  FVM_OP_EXIT,
 };
 
 int fvm_init(struct fvm *vm, void *code, int64_t stack_size);
