@@ -12,9 +12,10 @@ struct fvm;
 typedef int64_t (*fvm_syscall_fn_t)(struct fvm* vm);
 
 struct fvm {
-  fvm_word_t sp;
-  fvm_word_t bp;
-  fvm_word_t pc;
+  fvm_word_t sp;  // stack pointer
+  fvm_word_t bp;  // base pointer
+  fvm_word_t pc;  // programm counter
+  fvm_word_t rv;  // return value
   fvm_syscall_fn_t *syscall_table;
 };
 
@@ -24,6 +25,8 @@ enum fvm_op {
   FVM_OP_BP,
   FVM_OP_SBP,
   FVM_OP_PC,
+  FVM_OP_RV,
+  FVM_OP_SRV,
   
   FVM_OP_IMM,
   
@@ -95,7 +98,7 @@ enum fvm_op {
 };
 
 int fvm_init(struct fvm *vm, void *code, int64_t stack_size);
-int fvm_execute(struct fvm *vm);
+int64_t fvm_execute(struct fvm *vm);
 
 void fvm_push(struct fvm *vm, fvm_word_t value);
 int64_t fvm_pop(struct fvm *vm);

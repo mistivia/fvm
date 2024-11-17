@@ -10,6 +10,7 @@ int fvm_init(struct fvm *vm, void *code, int64_t stack_size) {
   vm->sp = (fvm_word_t)(stack_vm + stack_size);
   vm->bp = vm->sp;
   vm->pc = (fvm_word_t)code;
+  vm->rv = 0;
   return 1;
 }
 
@@ -74,14 +75,15 @@ void fvm_store8(struct fvm *vm, fvm_word_t addr, int8_t value) {
 }
 
 
-int fvm_execute(struct fvm *vm) {
+int64_t fvm_execute(struct fvm *vm) {
   fvm_word_t a, b, c;
   fvm_float_t x, y, z;
   while (1) {
     enum fvm_op op = (enum fvm_op)(uint8_t)fvm_load8(vm, vm->pc);
     switch (op) {
     case FVM_OP_SP:
-      fvm_push(vm, vm->sp);
+      a = vm->sp;
+      fvm_push(vm, a);
       vm->pc++;
       break;
     case FVM_OP_SSP:
@@ -94,6 +96,15 @@ int fvm_execute(struct fvm *vm) {
       break;
     case FVM_OP_SBP:
       vm->bp = fvm_pop(vm);
+      vm->pc++;
+      break;
+    case FVM_OP_RV:
+      a = vm->rv;
+      fvm_push(vm, a);
+      vm->pc++;
+      break;
+    case FVM_OP_SRV:
+      vm->rv = fvm_pop(vm);
       vm->pc++;
       break;
     case FVM_OP_PC:
@@ -410,8 +421,7 @@ int fvm_execute(struct fvm *vm) {
       vm->pc++;
       break;
     case FVM_OP_EXIT:
-      a = fvm_pop(vm);
-      return a;
+      return vm->rv;
     default:
       fprintf(stderr, "unknown opcode.\n");
       break; 
