@@ -36,15 +36,15 @@
      (bput  . ((imm 8) mul bp add st))
      (sput . ((imm 8) mul bp add st)))))
 
-(define (is-pseudo-op sym)
+(define (is-pseudo-op? sym)
   (hash-table-ref/default pseudo-op-table sym #f))
 
-(define (is-op sym)
+(define (is-op? sym)
   (hash-table-ref/default opcode-table sym #f))
 
-(define (is-tag sym tag-table)
-  (not (or (is-op sym)
-	   (is-pseudo-op sym)
+(define (is-tag? sym tag-table)
+  (not (or (is-op? sym)
+	   (is-pseudo-op? sym)
 	   (not (hash-table-ref/default tag-table sym #f)))))
 
 (define (pseudo-op-pass prog)
@@ -56,18 +56,45 @@
     (if (null? prog)
 	ret
 	(let ((next-op (car prog)))
-	  (if (is-pseudo-op next-op)
+	  (if (is-pseudo-op? next-op)
 	      (impl (cdr prog) (add-to-prog
 				(hash-table-ref pseudo-op-table next-op)
 				ret))
 	      (impl (cdr prog) (cons (car prog) ret))))))
   (reverse (impl prog '())))
 
-(define (is-tag-op op)
-  (and (list? op) (eq 'tag (car op))))
+(define (is-tag-op? op)
+  (and (list? op) (eq? 'tag (car op))))
 
-(define (is-imm-op op)
-  (and (list? op) (eq 'imm (car op))))
+(define (is-imm-op? op)
+  (and (list? op) (eq? 'imm (car op))))
+
+(define (tag-preprocess-pass prog)
+  (define (is-local-tag? sym)
+    (eq? #\. (string-ref (symbol->string sym) 0)))
+  (define (compose-tag seg sym)
+    (if (null? seg)
+	sym
+	(if (is-local-tag? sym)
+	    (string->symbol (string-append (symbol->string seg) (symbol->string sym)))
+	    sym)))
+  (define (not-op? sym) (not (or (is-op? sym) (is-pseudo-op? sym))))
+  (define (impl prog ret curseg)
+    (if (null? prog)
+	(reverse ret)
+	(let ((cur (car prog)))
+	  (cond ((symbol? cur) (if (not-op? cur)
+				   (impl (cdr prog)
+					 (cons (compose-tag curseg cur) ret)
+					 curseg)
+				   (impl (cdr prog) (cons cur ret) curseg)))
+		((tag-op? cur) (if (local-tag? (cadr cur))
+				     (impl (cdr prog)
+					   (cons (list 'tag (compose-tag curseg (cadr cur))) ret)
+					   curseg)
+				     (impl (cdr prog) (cons cur ret) (cadr cur))))
+		(else (impl (cdr prog) (cons cur ret) curseg))))))
+  (impl prog '() '()))
 
 (define (calculate-tag-pos prog)
   (define (impl prog cur-pos tag-table)
@@ -91,6 +118,7 @@
   (with-input-from-file input-file
     (lambda (port) (set! prog (read port))))
   (set! prog (pseudo-op-pass prog))
+  (set! prog (tag-preprocess-pass prog))
   (set! prog (tag-pass prog))
   (with-output-to-file output-file
     (lambda (port) (output-prog prog port))))
