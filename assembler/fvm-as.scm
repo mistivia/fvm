@@ -97,29 +97,54 @@
   (impl prog '() '()))
 
 (define (calculate-tag-pos prog)
-  (define (impl prog cur-pos tag-table)
-    ;; TODO
-    '())
   (define tag-table (make-hash-table))
-  (impl prog 0 tag-table)
+  (define (impl prog cur-pos)
+    (if (null? prog)
+	'()
+	(let ((cur-op (car prog)))
+	  (cond ((is-tag-op? cur-op) (let ()
+				       (hash-table-set! tag-table (cadr cur-op) cur-pos)
+				       (impl (cdr prog) cur-pos)))
+		((is-op? cur-op) (impl (cdr prog) (+ 1 cur-pos)))
+		(else (impl (cdr prog) (+ 9 cur-pos)))))))
+  (impl prog 0)
   tag-table)
 
 (define (tag-pass prog)
-  ;; TODO
-  '())
+  (define tag-table (calculate-tag-pos prog))
+  (define (impl prog ret cur-pos)
+    (if (null? prog)
+	(reverse ret)
+	(let ((cur-op (car prog)))
+	  (define do-nothing
+	    (lambda (op-size)
+	      (impl (cdr prog) (cons cur-op ret) (+ op-size cur-pos))))
+	  (cond ((and (symbol? cur-op) (not (is-op? cur-op)))
+		 (let ((sym-pos (hash-table-ref/default tag-table cur-op #f)))
+		   (if sym-pos
+		       (impl (cdr prog)
+			     (cons (list 'imm (+ -9 (- sym-pos cur-pos))) ret)
+			     (+ 9 cur-pos))
+		       `(error "symbol not found:" ,cur-op)))) ;; error
+		((is-tag-op? cur-op) (do-nothing 0))
+		((is-op? cur-op) (do-nothing 1))
+		(else (do-nothing 9))))))
+  (impl prog '() 0))
 
-(define (output-prog prog port)
-  ;;
-  '())
+(define (output-prog prog output-file)
+  (call-with-output-file output-file
+    (lambda (port)
+      '())))
 
 (define (main input-file output-file)
   (define prog '())
   ;; read s-exp from file
-  (with-input-from-file input-file
+  (call-with-input-file input-file
     (lambda (port) (set! prog (read port))))
   (set! prog (pseudo-op-pass prog))
   (set! prog (tag-preprocess-pass prog))
-  (set! prog (tag-pass prog))
-  (with-output-to-file output-file
-    (lambda (port) (output-prog prog port))))
-
+  (let ((new-prog (tag-pass prog)))
+    (if (and (not (null? new-prog))
+	     (eq? 'error (car prog)))
+	(display new-prog) ;; error
+	(output-prog new-prog output-file))))
