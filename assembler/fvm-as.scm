@@ -1,4 +1,7 @@
 (import srfi-69)
+(import matchable)
+(import (chicken io))
+(import (chicken condition))
 
 (define (make-opcode-table)
   (define opcodes
@@ -88,7 +91,7 @@
 					 (cons (compose-tag curseg cur) ret)
 					 curseg)
 				   (impl (cdr prog) (cons cur ret) curseg)))
-		((tag-op? cur) (if (local-tag? (cadr cur))
+		((is-tag-op? cur) (if (local-tag? (cadr cur))
 				     (impl (cdr prog)
 					   (cons (list 'tag (compose-tag curseg (cadr cur))) ret)
 					   curseg)
@@ -132,9 +135,34 @@
   (impl prog '() 0))
 
 (define (output-prog prog output-file)
+  (define (write-64bit-number port x)
+    (if (or (>= x (expt 2 63))
+            (< x (- (expt 2 63))))
+        (abort "number out of limit!"))
+    (if (< x 0)
+        (set! x (+ x (expt 2 64))))
+    (let loop ((i 0) (x x))
+      (if (>= i 8)
+          '()
+          (let ()
+            (write-byte (modulo x 256) port)
+            (loop (+ i 1) (quotient x 256))))))
   (call-with-output-file output-file
     (lambda (port)
-      '())))
+      (let loop ((prog prog))
+        (if (null? prog)
+            '()
+            (let ((cur (car prog)))
+              (match cur
+                (('imm x)
+                 (let ()
+                   (write-byte (hash-table-ref opcode-table 'imm) port)
+                   (write-64bit-number port x)
+                   (loop (cdr prog))))
+                (x
+                 (let ()
+                   (write-byte (hash-table-ref opcode-table x) port)
+                   (loop (cdr prog)))))))))))
 
 (define (main input-file output-file)
   (define prog '())
@@ -144,7 +172,9 @@
   (set! prog (pseudo-op-pass prog))
   (set! prog (tag-preprocess-pass prog))
   (let ((new-prog (tag-pass prog)))
-    (if (and (not (null? new-prog))
-	     (eq? 'error (car prog)))
+    (if (or (null? new-prog)
+	    (eq? 'error (car prog)))
 	(display new-prog) ;; error
 	(output-prog new-prog output-file))))
+
+(main "input" "output")
