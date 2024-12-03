@@ -2,6 +2,8 @@
 (import matchable)
 (import (chicken io))
 (import (chicken condition))
+(import (chicken keyword))
+(import (chicken process-context))
 
 (define (make-opcode-table)
   (define opcodes
@@ -50,6 +52,18 @@
 	   (is-pseudo-op? sym)
 	   (not (hash-table-ref/default tag-table sym #f)))))
 
+(define (preprocess prog)
+  (let loop ((lst prog) (ret '()))
+    (match lst
+      (() (reverse ret))
+      (('imm num . r) (loop r (cons (list 'imm num) ret)))
+      ((x . r) (if (keyword? x)
+                   (loop r
+                         (cons (list 'tag
+                                     (string->symbol (keyword->string x)))
+                               ret))
+                   (loop r (cons x ret)))))))
+
 (define (pseudo-op-pass prog)
   (define (add-to-prog oplist ret)
     (if (null? oplist)
@@ -91,7 +105,7 @@
 					 (cons (compose-tag curseg cur) ret)
 					 curseg)
 				   (impl (cdr prog) (cons cur ret) curseg)))
-		((is-tag-op? cur) (if (local-tag? (cadr cur))
+		((is-tag-op? cur) (if (is-local-tag? (cadr cur))
 				     (impl (cdr prog)
 					   (cons (list 'tag (compose-tag curseg (cadr cur))) ret)
 					   curseg)
@@ -129,7 +143,7 @@
 			     (cons (list 'imm (+ -9 (- sym-pos cur-pos))) ret)
 			     (+ 9 cur-pos))
 		       `(error "symbol not found:" ,cur-op)))) ;; error
-		((is-tag-op? cur-op) (do-nothing 0))
+		((is-tag-op? cur-op) (impl (cdr prog) ret cur-pos))
 		((is-op? cur-op) (do-nothing 1))
 		(else (do-nothing 9))))))
   (impl prog '() 0))
@@ -169,6 +183,7 @@
   ;; read s-exp from file
   (call-with-input-file input-file
     (lambda (port) (set! prog (read port))))
+  (set! prog (preprocess prog))
   (set! prog (pseudo-op-pass prog))
   (set! prog (tag-preprocess-pass prog))
   (let ((new-prog (tag-pass prog)))
@@ -177,4 +192,13 @@
 	(display new-prog) ;; error
 	(output-prog new-prog output-file))))
 
-(main "input" "output")
+(define args (argv))
+
+(if (not (= (length args) 3))
+    (let ()
+      (display "Usage: fvm-as <input-file> <output-file>")
+      (newline)
+      (exit))
+    '())
+
+(main (cadr args) (caddr args))
