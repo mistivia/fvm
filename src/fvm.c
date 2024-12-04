@@ -424,6 +424,7 @@ int64_t fvm_execute(struct fvm *vm) {
       return vm->rv;
     default:
       fprintf(stderr, "unknown opcode.\n");
+      exit(-1);
       break; 
     }
   }
