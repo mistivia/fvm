@@ -4,6 +4,7 @@
 (import (chicken condition))
 (import (chicken keyword))
 (import (chicken process-context))
+(import (chicken port))
 
 (define (make-opcode-table)
   (define opcodes
@@ -181,7 +182,10 @@
 (define (main input-file output-file)
   (define prog '())
   ;; read s-exp from file
-  (call-with-input-file input-file
+  (define input-str
+    (with-input-from-file input-file
+      read-string))
+  (call-with-input-string (string-append "(" input-str ")")
     (lambda (port) (set! prog (read port))))
   (set! prog (preprocess prog))
   (set! prog (pseudo-op-pass prog))
