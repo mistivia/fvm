@@ -5,6 +5,8 @@
 (import (chicken keyword))
 (import (chicken process-context))
 (import (chicken port))
+(import (chicken blob))
+(import srfi-4)
 
 (define (make-opcode-table)
   (define opcodes
@@ -150,18 +152,17 @@
   (impl prog '() 0))
 
 (define (output-prog prog output-file)
-  (define (write-64bit-number port x)
-    (if (or (>= x (expt 2 63))
-            (< x (- (expt 2 63))))
-        (abort "number out of limit!"))
-    (if (< x 0)
-        (set! x (+ x (expt 2 64))))
-    (let loop ((i 0) (x x))
-      (if (>= i 8)
-          '()
-          (let ()
-            (write-byte (modulo x 256) port)
-            (loop (+ i 1) (quotient x 256))))))
+  (define (write-number x port)
+    (cond ((or (rational? x)
+               (real? x))    (write-string
+                              (blob->string (f64vector->blob (f64vector x)))
+                              #f
+                              port))
+          ((integer? x) (write-string (blob->string
+                                       (u64vector->blob (u64vector x)))
+                                      #f
+                                      port))
+          (else (abort "Expect a number"))))
   (call-with-output-file output-file
     (lambda (port)
       (let loop ((prog prog))
@@ -172,7 +173,7 @@
                 (('imm x)
                  (let ()
                    (write-byte (hash-table-ref opcode-table 'imm) port)
-                   (write-64bit-number port x)
+                   (write-number x port)
                    (loop (cdr prog))))
                 (x
                  (let ()
