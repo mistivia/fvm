@@ -153,15 +153,14 @@
 
 (define (output-prog prog output-file)
   (define (write-number x port)
-    (cond ((or (rational? x)
-               (real? x))    (write-string
-                              (blob->string (f64vector->blob (f64vector x)))
-                              #f
-                              port))
-          ((integer? x) (write-string (blob->string
+    (cond ((exact-integer? x) (write-string (blob->string
                                        (u64vector->blob (u64vector x)))
                                       #f
                                       port))
+          ((real? x) (write-string
+                       (blob->string (f64vector->blob (f64vector x)))
+                       #f
+                       port))
           (else (abort "Expect a number"))))
   (call-with-output-file output-file
     (lambda (port)

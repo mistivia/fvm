@@ -3,12 +3,19 @@
 
 #include "fvm.h"
 
+static void printnum(struct fvm *vm) {
+  int64_t n = fvm_pop(vm);
+  printf("%lld\n", n);
+}
+
 int main(int argc, char **argv) {
   struct fvm vm;
   if (argc < 2) {
     fprintf(stderr, "Usage: fvm <program-file>\n");
     return -1;
   }
+  vm.syscall_table = malloc(256 * sizeof(fvm_syscall_fn_t));
+  vm.syscall_table[1] = &printnum;
   FILE* fp = fopen(argv[1], "rb");
   if (fp == NULL) {
     fprintf(stderr, "Failed to open file.\n");

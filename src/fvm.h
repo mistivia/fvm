@@ -9,7 +9,7 @@ typedef double fvm_float_t;;
 struct fvm;
 
 // return non-zero if vm should be suspended
-typedef int64_t (*fvm_syscall_fn_t)(struct fvm* vm);
+typedef void (*fvm_syscall_fn_t)(struct fvm* vm);
 
 struct fvm {
   fvm_word_t sp;  // stack pointer
