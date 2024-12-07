@@ -1,14 +1,18 @@
 target = fvm
-cflags = -g
+cflags = -g -O3
 ldflags = -lm
 cc = gcc
+csc = chicken-csc
 
 src = $(shell find src/ -name '*.c' -not -name 'main.c')
 obj = $(src:.c=.o)
 tests=$(shell find tests/ -name '*.c')
 tests_bin=$(tests:.c=.bin)
 
-all: $(target)
+all: $(target) fvm-as
+
+fvm-as: assembler/fvm-as.scm
+	$(csc) $< -o $@
 
 full: all $(tests_bin)
 

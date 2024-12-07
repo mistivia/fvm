@@ -340,8 +340,12 @@ int64_t fvm_execute(struct fvm *vm) {
       a = fvm_pop(vm);
       fvm_push(vm, vm->pc + 1);
       vm->pc = a;
+      fvm_push(vm, vm->bp);
+      vm->bp = vm->sp;
       break;
     case FVM_OP_RET:
+      vm->sp = vm->bp;
+      vm->bp = fvm_pop(vm);      
       a = fvm_pop(vm);
       vm->pc = a;
       break;

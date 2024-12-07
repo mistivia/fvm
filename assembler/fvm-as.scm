@@ -39,10 +39,10 @@
 (define pseudo-op-table
   (alist->hash-table
    '((rel . (pc add))
-     (bpick . ((imm 8) mul bp add ld))
-     (spick . ((imm 8) mul sp add ld))
-     (bput  . ((imm 8) mul bp add st))
-     (sput . ((imm 8) mul bp add st)))))
+     (ldarg . ((imm 2) add (imm 8) mul bp add ld))
+     (ldvar . ((imm -1) swap sub (imm 8) mul bp add ld))
+     (starg  . ((imm 2) add (imm 8) mul bp add st))
+     (stvar . ((imm -1) swap sub (imm 8) mul bp add st)))))
 
 (define (is-pseudo-op? sym)
   (hash-table-ref/default pseudo-op-table sym #f))
@@ -60,6 +60,7 @@
     (match lst
       (() (reverse ret))
       (('imm num . r) (loop r (cons (list 'imm num) ret)))
+      (((? number? x) . r) (loop r (cons (list 'imm x) ret)))
       ((x . r) (if (keyword? x)
                    (loop r
                          (cons (list 'tag
