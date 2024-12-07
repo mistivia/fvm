@@ -338,7 +338,7 @@ int64_t fvm_execute(struct fvm *vm) {
       }
     case FVM_OP_CALL:
       a = fvm_pop(vm);
-      fvm_push(vm, vm->pc);
+      fvm_push(vm, vm->pc + 1);
       vm->pc = a;
       break;
     case FVM_OP_RET:
