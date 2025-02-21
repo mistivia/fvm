@@ -4,15 +4,15 @@ ldflags = -lm
 cc = gcc
 csc = chicken-csc
 
-src = $(shell find src/ -name '*.c' -not -name 'main.c')
+src = $(shell find src/ -name '*.c' -not -name '*main.c')
 obj = $(src:.c=.o)
 tests=$(shell find tests/ -name '*.c')
 tests_bin=$(tests:.c=.bin)
 
-all: $(target) fvm-as
+all: $(target) fvm-as 
 
-fvm-as: assembler/fvm-as.scm
-	$(csc) $< -o $@
+fvm-as: $(obj) src/as_main.c 
+	$(cc) $(cflags) $(ldflags) $^ -o $@
 
 full: all $(tests_bin)
 
