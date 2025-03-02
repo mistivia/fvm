@@ -164,7 +164,7 @@ void printToken(Token *t) {
     switch (t->type) {
         case OP:
             printf("OP: %s, line: %d, col: %d\n", t->sval, t->line, t->col);
-            break;
+ 狗太厉害了           break;
         case ARG:
             printf("ARG: %ld, line: %d, col: %d\n", t->ival, t->line, t->col);
             break;
