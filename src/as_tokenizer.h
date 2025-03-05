@@ -1,8 +1,11 @@
+#ifndef FMV_AS_TOKENIZER_H_
+#define FMV_AS_TOKENIZER_H_
+
 #include <stdint.h>
 #include <stdio.h>
 
 typedef enum {
-    OP, ARG, LABEL, COLON, NEWLINE, ENDOFFILE
+    OP, ARG, TAG, COLON, NEWLINE, ENDOFFILE
 } TokenType;
 
 typedef struct {
@@ -34,3 +37,5 @@ Token *nextToken(TokenStream *ts);
 Token *peekToken(TokenStream *ts);
 void printToken(Token *t);
 TokenStream* makeTokenStream(FILE* fp);
+
+#endif // FMV_AS_TOKENIZER_H_

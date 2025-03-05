@@ -132,7 +132,7 @@ Token nextTokenImpl(InputStream *s) {
             if (isOp(sval)) {
                 return (Token){.type = OP, .sval = sval, .line = line, .col = col};
             }
-            return (Token){.type = LABEL, .sval = sval, .line = line, .col = col};
+            return (Token){.type = TAG, .sval = sval, .line = line, .col = col};
         }
         fprintf(stderr, "error: invalid character %c at line %d, col %d\n", c, s->line, s->col);
     }
@@ -164,11 +164,11 @@ void printToken(Token *t) {
     switch (t->type) {
         case OP:
             printf("OP: %s, line: %d, col: %d\n", t->sval, t->line, t->col);
- 狗太厉害了           break;
+            break;
         case ARG:
             printf("ARG: %ld, line: %d, col: %d\n", t->ival, t->line, t->col);
             break;
-        case LABEL:
+        case TAG:
             printf("LABEL: %s, line: %d, col: %d\n", t->sval, t->line, t->col);
             break;
         case COLON:

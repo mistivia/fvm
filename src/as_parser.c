@@ -7,9 +7,9 @@
 //
 // <prog> ::= <stmts>
 // <stmts> ::= <stmt> <newline> | <stmt> <stmts>
-// <stmt> ::= <tag> <instr> | <instr> | <tag>
-// <instr> ::= <op> | <op> <arg> | <op> <label>
-// <tag> ::= <label> :
+// <stmt> ::= <label> <instr> | <instr> | <label>
+// <instr> ::= <op> | <op> <arg> | <op> <tag>
+// <label> ::= <tag> :
 // <op> ::= add | sub | mul | div | mod | eq
 
 
@@ -38,9 +38,25 @@ Stmts* parseStmts(TokenStream *ts) {
     return ss;
 }
 
+Label* parseLabel(TokenStream *ts) {
+    Token *t = nextToken(ts);
+    if (t->type != TAG) {
+        fprintf(stderr, "%d:%d Expect LABEL.\n", t->line, t->col);
+        exit(-1);
+    }
+    Label *l = malloc(sizeof(Label));
+    l->name = t->sval;
+    t = nextToken(ts);
+    if (t->type != COLON) {
+        fprintf(stderr, "%d:%d Expect COLON.\n", t->line, t->col);
+        exit(-1);
+    }
+    return l;
+}
+
 Stmt* parseStmt(TokenStream *ts) {
     Token *t = peekToken(ts);
-    if (t->type == LABEL) {
+    if (t->type == TAG) {
         Label *l = parseLabel(ts);
         t = peekToken(ts);
         if (t->type == COLON) {
@@ -49,23 +65,40 @@ Stmt* parseStmt(TokenStream *ts) {
         } else {
             Instr *i = parseInstr(ts);
             Stmt *s = malloc(sizeof(Stmt));
-            s->tag = l;
+            s->label = l;
             s->instr = i;
             return s;
         }
     } else {
         Instr *i = parseInstr(ts);
         Stmt *s = malloc(sizeof(Stmt));
-        s->tag = NULL;
+        s->label = NULL;
         s->instr = i;
         return s;
     }
 }
 
+// parse op
+Op parseOp(TokenStream *ts) {
+    Token *t = nextToken(ts);
+    Op op;
+    if (t->type == OP) {
+        op = str2op(t->sval);
+        if (op == OPEND) {
+            fprintf(stderr, "%d:%d Invalid OP.\n", t->line, t->col);
+            exit(-1);
+        }
+    } else {
+        fprintf(stderr, "%d:%d Expect OP.\n", t->line, t->col);
+        exit(-1);
+    }
+    return op;
+}
+
 Instr* parseInstr(TokenStream *ts) {
     Token *t = nextToken(ts);
     Instr *i = malloc(sizeof(Instr));
-    i->labelName = NULL;
+    i->tagName = NULL;
     if (t->type == OP) {
         i->op = parseOp(ts);
         t = peekToken(ts);
@@ -73,11 +106,10 @@ Instr* parseInstr(TokenStream *ts) {
             Arg *a = malloc(sizeof(Arg));
             a->ival = t->ival;
             a->fval = t->fval;
-            a->sval = t->sval;
             i->arg = a;
             nextToken(ts);
-        } else if (t->type == LABEL) {
-            i->labelName = t->sval;
+        } else if (t->type == TAG) {
+            i->tagName = t->sval;
             nextToken(ts);
         }
     }

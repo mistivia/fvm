@@ -1,31 +1,20 @@
+#ifndef FVM_AS_PARSER_H_
+#define FVM_AS_PARSER_H_
+
 #include "as_tokenizer.h"
 
-// BNF
-// ===
-//
-// <prog> ::= <stmts>
-// <stmts> ::= <stmt> <newline> | <stmt> <stmts>
-// <stmt> ::= <tag> <instr> | <instr> | <tag>
-// <instr> ::= <op> | <op> <arg> | <op> <label>
-// <tag> ::= <label> :
-// <op> ::= add | sub | mul | div | mod | eq
-
-enum op {
-    ADD, SUB, MUL, DIV, MOD, EQ
-};
-typedef enum op Op;
+#include "as_op.h"
 
 struct arg {
     int64_t ival;
     double fval;
-    const char *sval;
 };
 typedef struct arg Arg;
 
 struct instr {
     Op op;
     Arg* arg;
-    const char* labelName;
+    const char* tagName;
 };
 typedef struct instr Instr;
 
@@ -35,7 +24,7 @@ struct label {
 typedef struct label Label;
 
 struct stmt {
-    Label* tag;
+    Label* label;
     Instr* instr;
 };
 typedef struct stmt Stmt;
@@ -57,3 +46,4 @@ Instr* parseInstr(TokenStream *ts);
 Label* parseLabel(TokenStream *ts);
 Op parseOp(TokenStream *ts);
 
+#endif
